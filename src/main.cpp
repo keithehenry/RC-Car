@@ -55,13 +55,15 @@ void setup()
 
 void loop()
 {
-  // Capture volatile coordinates
+  // Snapshot volatile coordinates
   float EleVal0 = EleVal;
   float AilVal0 = AilVal;
 
+  // Compute the amount by which to slow down the turning wheel
   float angle = atan2(EleVal0, AilVal0);
   float offset = abs(sin(angle));
 
+  // If turning to the Right, slow down the Right wheel, and visa versa.
   float LMotor, RMotor;
   if (AilVal0 >= 0)
   {
@@ -74,11 +76,11 @@ void loop()
     RMotor = EleVal0;
   }
 
-  // Left motor for MX1919 module
+  // Map for MX1919 dual motor driver module:
+  // Left motor
   unsigned int LInA = abs(max(0, LMotor)) * PWMUno;
   unsigned int LInB = abs(min(0, LMotor)) * PWMUno;
-
-  // Right motor for MX1919 module
+  // Right motor
   unsigned int RInA = abs(max(0, RMotor)) * PWMUno;
   unsigned int RInB = abs(min(0, RMotor)) * PWMUno;
 
