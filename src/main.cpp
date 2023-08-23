@@ -15,7 +15,7 @@ The DSerial.print statements are for use with Teleplot, a PlatformIO extension.
 // For the RC Receiver:
 // PWM should be trimmed for a center point of 1.5ms
 const int PWMTrim = 1500;  // Nominal PWM center value in ms
-const int PWMRng = 400;    // Nominal PWM range is 500, mine is less
+const int PWMRng = 450;    // Nominal PWM range is 500, mine is less
 
 const int PWMUno = 255;  // Arduino Uno's PWM range
 const int PWMMin = 20;   // Dead zone; motor just vibrates
@@ -28,6 +28,9 @@ const int PWMMin = 20;   // Dead zone; motor just vibrates
 // RC receiver inputs:
 const byte AilPin = 2;  // Aileron - hardware interrupt
 const byte ElePin = 3;  // Elevator - ditto
+
+/*
+// L293D Pins:
 // Left motor:
 const byte L1APin = 8;   // Logic - reverse
 const byte L2APin = 9;   // Logic - forward
@@ -36,6 +39,15 @@ const byte LEnPin = 10;  // PWM - rate
 const byte REnPin = 11;  // PWM - rate
 const byte R2APin = 12;  // Logic - reverse
 const byte R1APin = 13;  // Logic - forward
+*/
+
+// MX1919 Pins:
+// Left motor:
+const byte LInAPin = 5;  // PWM - reverse
+const byte LInBPin = 6;  // PWM - forward
+// Right motor:
+const byte RInAPin = 11;  // PWM - forward
+const byte RInBPin = 10;  // PWM - reverse
 
 // All DX4e servo reversing switches are OFF.
 // Globals for ISRs:
@@ -75,19 +87,35 @@ void setup() {
     attachInterrupt(digitalPinToInterrupt(AilPin), AilValISR, CHANGE);
     attachInterrupt(digitalPinToInterrupt(ElePin), EleValISR, CHANGE);
 
-    // L293D:
-    pinMode(L2APin, OUTPUT);
-    pinMode(L1APin, OUTPUT);
-    pinMode(LEnPin, OUTPUT);
-    pinMode(REnPin, OUTPUT);
-    pinMode(R1APin, OUTPUT);
-    pinMode(R2APin, OUTPUT);
+    // MX1919:
+    pinMode(LInAPin, OUTPUT);
+    pinMode(LInBPin, OUTPUT);
+    pinMode(RInAPin, OUTPUT);
+    pinMode(RInBPin, OUTPUT);
+
+    /*
+        // L293D:
+        pinMode(L2APin, OUTPUT);
+        pinMode(L1APin, OUTPUT);
+        pinMode(LEnPin, OUTPUT);
+        pinMode(REnPin, OUTPUT);
+        pinMode(R1APin, OUTPUT);
+        pinMode(R2APin, OUTPUT);
+    */
 
     AilVal = 0;
     EleVal = 0;
 
     DSerial.begin(9600);
     DSerial.println("Setup Complete");
+}
+
+// analogWrite PWM value unless it's too low (for motor)
+void writePin(byte p, int v) {
+        if (v > PWMMin)
+        analogWrite(p, min(v, PWMUno));
+    else
+        digitalWrite(p, LOW);
 }
 
 void loop() {
@@ -125,7 +153,6 @@ void loop() {
     DSerial.print(">RMotor:");
     DSerial.println(RMotor);
 
-    /*
     // Map for MX1919 dual motor driver module:
     // Left motor
     unsigned int LInA = abs(max(0, LMotor)) * PWMUno;
@@ -143,8 +170,13 @@ void loop() {
     DSerial.println(RInA);
     DSerial.print(">RInB:");
     DSerial.println(RInB);
-  */
 
+    writePin(LInAPin, LInA);
+    writePin(LInBPin, LInB);
+    writePin(RInAPin, RInA);
+    writePin(RInBPin, RInB);
+
+    /*
     // Map for L293D dual motor driver chip:
     bool L1A = (LMotor > 0) ? HIGH : LOW;
     bool L2A = !L1A;
@@ -182,4 +214,6 @@ void loop() {
         analogWrite(REnPin, REn);
     else
         digitalWrite(REnPin, LOW);
+
+*/
 }
